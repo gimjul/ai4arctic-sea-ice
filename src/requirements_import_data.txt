@@ -1,0 +1,8 @@
+# Dépendances pour import_data.ipynb
+# Exploration et visualisation complète des données satellite Northwest 2019
+
+xarray
+h5netcdf
+matplotlib
+numpy
+jupyter
