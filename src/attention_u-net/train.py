@@ -1,17 +1,5 @@
 """
 train.py — Entraînement de l'Attention U-Net avec polygon-level weak supervision.
-
-Optimisations RTX 5070 Ti (Blackwell, 16 GB VRAM) :
-  • torch.bfloat16 (AMP) : plus stable que float16, natif sur Blackwell
-  • torch.compile(mode="max-autotune") : +30–40% de débit
-  • pin_memory + persistent_workers pour maximiser le débit CPU→GPU
-  • batch_size=8, pas d'accumulation de gradient (VRAM suffisant)
-  • AdamW + CosineAnnealingLR avec warmup linéaire
-
-Lancement :
-    cd mehdi
-    python train.py                          # paramètres par défaut
-    python train.py --epochs 30 --lr 1e-3   # override CLI
 """
 
 from __future__ import annotations
