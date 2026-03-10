@@ -1,0 +1,29 @@
+# Dépendances du projet Mehdi — AI4Arctic Sea Ice Segmentation
+# RTX 5070 Ti → installer PyTorch avec CUDA 12.x
+
+# Deep Learning
+torch>=2.2.0           # torch.compile + bfloat16 AMP
+torchvision>=0.17.0
+
+# Data
+xarray>=2023.1.0
+h5netcdf>=1.1.0        # engine pour lire les .nc
+netCDF4>=1.6.0         # alternative engine
+
+# Traitement image
+opencv-python>=4.8.0   # cv2.resize pour AMSR
+scipy>=1.11.0          # gaussian_filter pour l'ALS
+numpy>=1.24.0
+
+# Visualisation
+matplotlib>=3.7.0
+Pillow>=10.0.0
+
+# Notebook
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+tqdm>=4.65.0
+
+# Optionnel (monitoring)
+psutil>=5.9.0
+pandas>=2.0.0          # tableau récapitulatif dans run_pipeline.ipynb

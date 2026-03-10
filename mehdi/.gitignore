@@ -1,0 +1,28 @@
+# Données (trop volumineuses pour git)
+*.nc
+*.h5
+*.hdf5
+
+# Modèles entraînés
+*.pth
+*.pt
+*.ckpt
+
+# Sorties générées
+outputs/
+outputs_*/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Rapport
+*.docx
+~$*
+
+# Figures générées (sauf assets/)
+*.png
+!assets/*.png
+
+# Temporaire
+*.tmp
+*.log
