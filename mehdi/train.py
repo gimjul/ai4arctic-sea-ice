@@ -22,11 +22,10 @@ import sys
 import time
 from pathlib import Path
 
-# ── Doit être fait AVANT l'import de torch ────────────────────────────────────
 os.environ.setdefault("PYTORCH_ALLOC_CONF", "max_split_size_mb:256")
 
 import matplotlib
-matplotlib.use("Agg")   # pas de display interactif (sauvegarde fichiers)
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -42,7 +41,7 @@ from losses import total_loss as compute_loss
 from model import AttentionUNet
 
 
-# ─── Monitoring ressources ────────────────────────────────────────────────────
+#  Monitoring ressources 
 
 def _fmt(n: int | None) -> str:
     if n is None:
@@ -65,7 +64,7 @@ def log_resources(tag: str, device: torch.device) -> None:
     print(f"[GPU] {msg}")
 
 
-# ─── Visualisation debug ──────────────────────────────────────────────────────
+#  Visualisation debug 
 
 def save_debug_fig(
     inputs: torch.Tensor,
@@ -120,10 +119,10 @@ def save_debug_fig(
     plt.close()
 
 
-# ─── Entraînement ─────────────────────────────────────────────────────────────
+#  Entraînement 
 
 def train(cfg: Config) -> None:
-    # ── Device ────────────────────────────────────────────────────────────────
+    #  Device 
     if cfg.device == "auto":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:
@@ -135,7 +134,7 @@ def train(cfg: Config) -> None:
     else:
         print("Attention : entraînement sur CPU (lent)")
 
-    # ── Données ───────────────────────────────────────────────────────────────
+    #  Données 
     data_dir = Path(cfg.data_dir)
     train_files, val_files = split_scenes(data_dir, cfg.val_scene_keyword)
 
@@ -173,7 +172,7 @@ def train(cfg: Config) -> None:
     n_val   = sum(len(d) for d in val_sets) if val_sets else 0
     print(f"\nPatches train : {n_train}  |  val : {n_val}")
 
-    # ── Modèle ────────────────────────────────────────────────────────────────
+    #  Modèle 
     model = AttentionUNet(
         n_channels=cfg.n_channels,
         base_features=cfg.base_features,
@@ -185,7 +184,7 @@ def train(cfg: Config) -> None:
         print("Compilation du modèle (torch.compile)…")
         model = torch.compile(model, mode="max-autotune")
 
-    # ── Optimiseur & scheduler ────────────────────────────────────────────────
+    #  Optimiseur & scheduler 
     optimizer = optim.AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
 
     # Cosine annealing avec warmup linéaire
@@ -200,7 +199,7 @@ def train(cfg: Config) -> None:
 
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
-    # ── AMP ───────────────────────────────────────────────────────────────────
+    #  AMP 
     amp_dtype = torch.bfloat16 if cfg.amp_dtype == "bfloat16" else torch.float16
     use_amp = cfg.use_amp and (device.type == "cuda")
 
@@ -212,7 +211,7 @@ def train(cfg: Config) -> None:
     else:
         scaler = torch.amp.GradScaler(device.type, enabled=False)
 
-    # ── Sorties ───────────────────────────────────────────────────────────────
+    #  Sorties 
     save_dir = Path(cfg.save_dir)
     debug_dir = save_dir / "debug"
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -220,7 +219,7 @@ def train(cfg: Config) -> None:
 
     log_resources("startup", device)
 
-    # ── Boucle d'entraînement ─────────────────────────────────────────────────
+    #  Boucle d'entraînement 
     history: dict[str, list[float]] = {
         "train_loss": [], "val_loss": [], "lr": []
     }
@@ -278,7 +277,7 @@ def train(cfg: Config) -> None:
 
         avg_train = {k: v / n_batches for k, v in running.items()}
 
-        # ── Validation ────────────────────────────────────────────────────────
+        #  Validation 
         avg_val_loss = float("nan")
         if val_loader is not None:
             model.eval()
@@ -306,7 +305,7 @@ def train(cfg: Config) -> None:
                     best_ckpt_path,
                 )
 
-        # ── Checkpoint de l'époque ────────────────────────────────────────────
+        #  Checkpoint de l'époque 
         if not cfg.save_best_only:
             torch.save(
                 {"epoch": epoch + 1, "model_state": model.state_dict(), "cfg": cfg},
@@ -330,7 +329,7 @@ def train(cfg: Config) -> None:
         if device.type == "cuda":
             log_resources(f"epoch {epoch+1}", device)
 
-    # ── Courbes de loss ───────────────────────────────────────────────────────
+    #  Courbes de loss 
     _save_loss_curves(history, save_dir)
     print(f"\nEntraînement terminé. Sorties dans : {save_dir.resolve()}")
     if val_loader is not None:
@@ -369,7 +368,7 @@ def _save_loss_curves(history: dict[str, list], save_dir: Path) -> None:
     print(f"Courbes sauvegardées : {path}")
 
 
-# ─── CLI ──────────────────────────────────────────────────────────────────────
+#  CLI 
 
 def _make_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Attention U-Net — AI4Arctic weak supervision")

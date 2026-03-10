@@ -21,7 +21,7 @@ import xarray as xr
 from torch.utils.data import Dataset
 
 
-# ─── Table de conversion SIGRID-3 CT_code → concentration [0, 1] ─────────────
+#  Table de conversion SIGRID-3 CT_code → concentration [0, 1] 
 SIGRID_TO_CT: dict[int, float] = {
     92: 1.00, 91: 0.95, 90: 0.90,
     81: 0.90, 80: 0.80, 70: 0.70,
@@ -68,7 +68,7 @@ class AI4ArcticDataset(Dataset):
         self._build_angle()
         self._build_ct_table()
 
-    # ── Construction des features globales ────────────────────────────────────
+    #  Construction des features globales 
 
     def _build_amsr(self) -> None:
         """Charge et normalise AMSR-2 btemp_36.5v."""
@@ -146,7 +146,7 @@ class AI4ArcticDataset(Dataset):
             self._ct_max_id = 0
             self._ct_table = np.zeros(1, dtype=np.float32)
 
-    # ── Interface Dataset ─────────────────────────────────────────────────────
+    #  Interface Dataset 
 
     def __len__(self) -> int:
         return self.n_ph * self.n_pw
@@ -164,7 +164,7 @@ class AI4ArcticDataset(Dataset):
         y0, y1 = row * self.patch_size, (row + 1) * self.patch_size
         x0, x1 = col * self.patch_size, (col + 1) * self.patch_size
 
-        # ── SAR HH / HV ──────────────────────────────────────────────────────
+        #  SAR HH / HV 
         hh_key = "nersc_sar_primary" if "nersc_sar_primary" in self.ds else "sar_primary"
         hv_key = "nersc_sar_secondary" if "nersc_sar_secondary" in self.ds else "sar_secondary"
 
@@ -180,13 +180,13 @@ class AI4ArcticDataset(Dataset):
         hh_n = (np.clip(hh_db, -30.0, 20.0) + 30.0) / 50.0
         hv_n = (np.clip(hv_db, -30.0, 20.0) + 30.0) / 50.0
 
-        # ── Angle d'incidence ─────────────────────────────────────────────────
+        #  Angle d'incidence 
         angle_vec = self.angle_vector[x0:x1]
         if len(angle_vec) < self.patch_size:
             angle_vec = np.pad(angle_vec, (0, self.patch_size - len(angle_vec)), mode="edge")
         angle = np.repeat(angle_vec[np.newaxis, :], self.patch_size, axis=0)
 
-        # ── AMSR-2 ────────────────────────────────────────────────────────────
+        #  AMSR-2 
         if self.amsr_mode == "sar_grid":
             amsr = self.amsr_hires[y0:y1, x0:x1].astype(np.float32)
         elif self.amsr_mode == "lowres":
@@ -201,7 +201,7 @@ class AI4ArcticDataset(Dataset):
         else:
             amsr = np.zeros((self.patch_size, self.patch_size), dtype=np.float32)
 
-        # ── Assemblage canaux ─────────────────────────────────────────────────
+        #  Assemblage canaux 
         channels = [hh_n, hv_n, angle, amsr]
         if self.add_ratio:
             # Ratio HH/HV en dB → discriminant pour type de glace
@@ -209,7 +209,7 @@ class AI4ArcticDataset(Dataset):
             channels.append(ratio)
         image = np.stack(channels, axis=0).astype(np.float32)  # [C, H, W]
 
-        # ── Labels : poly_map et ct_map ───────────────────────────────────────
+        #  Labels : poly_map et ct_map 
         poly_raw = self.ds["polygon_icechart"].isel(
             sar_lines=slice(y0, y1), sar_samples=slice(x0, x1)
         ).values
@@ -231,7 +231,7 @@ class AI4ArcticDataset(Dataset):
         poly_map = poly_raw.copy()
         poly_map[~valid_mask] = -1
 
-        # ── Augmentations ─────────────────────────────────────────────────────
+        #  Augmentations 
         if self.augment:
             image, ct_map, poly_map, valid_mask = _augment(image, ct_map, poly_map, valid_mask)
 
@@ -243,7 +243,7 @@ class AI4ArcticDataset(Dataset):
         )
 
 
-# ─── Augmentations ────────────────────────────────────────────────────────────
+#  Augmentations 
 
 _AUG_OPS = [
     lambda x: x,                                           # identité
@@ -267,7 +267,7 @@ def _augment(image, ct_map, poly_map, valid_mask):
     return image, ct_map, poly_map, valid_mask
 
 
-# ─── Utilitaire : split train/val ─────────────────────────────────────────────
+#  Utilitaire : split train/val 
 
 def split_scenes(
     data_dir: str | Path,

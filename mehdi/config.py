@@ -10,7 +10,7 @@ from pathlib import Path
 
 @dataclass
 class Config:
-    # ── Données ──────────────────────────────────────────────────────────────
+    #  Données 
     data_dir: str = "../sujet/Northwest"   # dataset complet (59 scenes, 37 GB)
     patch_size: int = 256
     augment: bool = True
@@ -20,11 +20,11 @@ class Config:
     # Split train/val temporel : 2018 (53 scenes) -> train | 2019 (6 scenes) -> val
     val_scene_keyword: str = "2019"  # toutes les scenes 2019 = validation
 
-    # ── Modèle ───────────────────────────────────────────────────────────────
+    #  Modèle 
     base_features: int = 64    # doublement à chaque niveau : 64→128→256→512→1024
     dropout: float = 0.1       # dropout dans les blocs encodeur
 
-    # ── Entraînement ─────────────────────────────────────────────────────────
+    #  Entraînement 
     batch_size: int = 16       
     epochs: int = 50          
     lr: float = 3e-4
@@ -33,7 +33,7 @@ class Config:
     lambda_entropy: float = 0.01  
     grad_clip: float = 1.0         # gradient clipping
 
-    # ── Hardware ─────────────────────────────────────────────────────────────
+    #  Hardware 
     device: str = "auto"           
     use_amp: bool = True
     amp_dtype: str = "bfloat16"    
@@ -41,14 +41,14 @@ class Config:
     pin_memory: bool = True
     persistent_workers: bool = True
 
-    # ── Inférence (scène complète) ────────────────────────────────────────────
+    #  Inférence (scène complète) 
     infer_stride: int = 64         # stride sliding window (overlap = 256/64 = 4x par dimension)
     gaussian_sigma: float = 1.5    # blur sur logits avant ALS
     als_pct_low: float = 2.0       # percentile bas pour l'Analytical Logit Scaling
     als_pct_high: float = 98.0     # percentile haut
     als_clip: float = 15.0         # clip robuste des logits avant ALS (evite z_98%>>15 apres training ete)
 
-    # ── Sorties ───────────────────────────────────────────────────────────────
+    #  Sorties 
     save_dir: str = "outputs_northwest"
     debug_every: int = 1           # sauvegarder viz debug tous les N epochs
     save_best_only: bool = True    # ne conserver que le meilleur checkpoint val

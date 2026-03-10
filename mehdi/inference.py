@@ -38,7 +38,7 @@ from dataset import SIGRID_TO_CT
 from model import AttentionUNet
 
 
-# ─── Chargement de la scène complète ──────────────────────────────────────────
+#  Chargement de la scène complète 
 
 def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -56,7 +56,7 @@ def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray
 
     print(f"  Chargement scène {Path(nc_path).name[:35]}  ({H}×{W} px)…")
 
-    # ── SAR ──────────────────────────────────────────────────────────────────
+    #  SAR 
     hh = np.abs(ds[hh_key].values).astype(np.float32)
     hv = np.abs(ds[hv_key].values).astype(np.float32)
     land_mask = np.isnan(hh)
@@ -68,7 +68,7 @@ def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray
     hh_n = (np.clip(hh_db, -30.0, 20.0) + 30.0) / 50.0
     hv_n = (np.clip(hv_db, -30.0, 20.0) + 30.0) / 50.0
 
-    # ── Angle d'incidence ─────────────────────────────────────────────────────
+    #  Angle d'incidence 
     angle = np.full((H, W), 0.5, dtype=np.float32)
     try:
         if "sar_incidenceangles" in ds:
@@ -89,7 +89,7 @@ def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray
     except Exception:
         pass
 
-    # ── AMSR-2 ────────────────────────────────────────────────────────────────
+    #  AMSR-2 
     amsr = np.zeros((H, W), dtype=np.float32)
     if "btemp_36.5v" in ds:
         da = ds["btemp_36.5v"]
@@ -104,7 +104,7 @@ def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray
 
     image = np.stack([hh_n, hv_n, angle, amsr], axis=0)  # [4, H, W]
 
-    # ── Labels (CT) ───────────────────────────────────────────────────────────
+    #  Labels (CT) 
     ct_lookup: dict[int, float] = {}
     if "polygon_codes" in ds:
         for raw_line in ds["polygon_codes"].values:
@@ -131,7 +131,7 @@ def load_scene(nc_path: str | Path, cfg: Config) -> tuple[np.ndarray, np.ndarray
     return image, ct_map, land_mask
 
 
-# ─── Sliding window ────────────────────────────────────────────────────────────
+#  Sliding window 
 
 @torch.no_grad()
 def sliding_window_inference(
@@ -182,7 +182,7 @@ def sliding_window_inference(
     return (logit_sum / count).astype(np.float32)
 
 
-# ─── Analytical Logit Scaling (ALS) ──────────────────────────────────────────
+#  Analytical Logit Scaling (ALS) 
 
 def analytical_logit_scaling(
     logits: np.ndarray,
@@ -241,7 +241,7 @@ def analytical_logit_scaling(
     return prob_scaled.astype(np.float32), prob_raw.astype(np.float32), info
 
 
-# ─── Figures de présentation ──────────────────────────────────────────────────
+#  Figures de présentation 
 
 def save_result_figures(
     nc_path: Path,
@@ -261,11 +261,11 @@ def save_result_figures(
     out_dir.mkdir(parents=True, exist_ok=True)
     scene_name = nc_path.name[:16]
 
-    # ── Couleurs ─────────────────────────────────────────────────────────────
+    #  Couleurs 
     # Colormap spéciale glace : blanc pour glace, bleu profond pour eau
     ice_colors = plt.cm.Blues_r  # blanc→bleu (glace=1→blanc, eau=0→bleu)
 
-    # ── Figure 1 : vue complète 5 panneaux ───────────────────────────────────
+    #  Figure 1 : vue complète 5 panneaux 
     fig = plt.figure(figsize=(25, 8))
     fig.suptitle(
         f"Segmentation glace de mer — Attention U-Net  |  {scene_name}",
@@ -313,7 +313,7 @@ def save_result_figures(
     plt.close(fig)
     print(f"  Figure principale : {path1.name}")
 
-    # ── Figure 2 : zoom sur une sous-région ───────────────────────────────────
+    #  Figure 2 : zoom sur une sous-région 
     H, W = image.shape[1], image.shape[2]
     # Choisir la région centrale (souvent là où il y a le plus d'intérêt)
     r0, r1 = H // 4, H // 4 + H // 4
@@ -345,7 +345,7 @@ def save_result_figures(
     plt.close(fig2)
     print(f"  Figure zoom       : {path2.name}")
 
-    # ── Figure 3 : distribution des logits (pour expliquer l'ALS) ────────────
+    #  Figure 3 : distribution des logits (pour expliquer l'ALS) 
     fig3, axes3 = plt.subplots(1, 2, figsize=(12, 4))
     fig3.suptitle("Analytical Logit Scaling — distribution des logits", fontsize=12)
 
@@ -373,7 +373,7 @@ def save_result_figures(
     print(f"  Distribution ALS  : {path3.name}")
 
 
-# ─── Évaluation quantitative ──────────────────────────────────────────────────
+#  Évaluation quantitative 
 
 def evaluate_scene(
     prob_scaled: np.ndarray,
@@ -430,11 +430,11 @@ def evaluate_scene(
 
     # Affichage tableau
     print(f"\n{'Polygone':>10} {'CT cible':>10} {'CT prédit':>10} {'Erreur':>8} {'N px':>8}")
-    print("─" * 55)
+    print("" * 55)
     for r in sorted(results, key=lambda x: x["polygon_id"]):
         print(f"{r['polygon_id']:>10}  {r['ct_target']:>9.3f}  "
               f"{r['ct_pred']:>9.3f}  {r['abs_error']:>7.3f}  {r['n_pixels']:>7}")
-    print("─" * 55)
+    print("" * 55)
     print(f"  MAE concentration : {mae:.4f}  |  Accuracy (±0.10) : {acc:.1%}")
 
     # Figure tableau
@@ -464,7 +464,7 @@ def evaluate_scene(
     return {"mae": mae, "accuracy": acc, "per_polygon": results}
 
 
-# ─── Point d'entrée ───────────────────────────────────────────────────────────
+#  Point d'entrée 
 
 def run_inference(
     nc_path: str | Path,
@@ -482,7 +482,7 @@ def run_inference(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     amp_dtype = torch.bfloat16 if cfg.amp_dtype == "bfloat16" else torch.float16
 
-    # ── Modèle ────────────────────────────────────────────────────────────────
+    #  Modèle 
     print(f"\n[1/4] Chargement du checkpoint : {ckpt_path.name}")
     ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
     model = AttentionUNet(
@@ -495,11 +495,11 @@ def run_inference(
     model.load_state_dict(state, strict=False)
     model.eval()
 
-    # ── Scène ─────────────────────────────────────────────────────────────────
+    #  Scène 
     print(f"[2/4] Chargement de la scène…")
     image, ct_map, land_mask = load_scene(nc_path, cfg)
 
-    # ── Sliding window ────────────────────────────────────────────────────────
+    #  Sliding window 
     print(f"[3/4] Inférence sliding window (stride={cfg.infer_stride})…")
     logits = sliding_window_inference(
         model, image, device,
@@ -509,7 +509,7 @@ def run_inference(
         use_amp=cfg.use_amp,
     )
 
-    # ── ALS ───────────────────────────────────────────────────────────────────
+    #  ALS 
     print(f"[4/4] Analytical Logit Scaling (σ={cfg.gaussian_sigma})…")
     prob_scaled, prob_raw, als_info = analytical_logit_scaling(
         logits, land_mask,
@@ -521,10 +521,10 @@ def run_inference(
     print(f"  ALS : T={als_info['T']:.4f}  b={als_info['b']:.4f}  "
           f"z_2%={als_info['z_2pct']:.4f}  z_98%={als_info['z_98pct']:.4f}")
 
-    # ── Figures ───────────────────────────────────────────────────────────────
+    #  Figures 
     save_result_figures(nc_path, image, ct_map, land_mask, prob_raw, prob_scaled, als_info, out_dir)
 
-    # ── Évaluation ────────────────────────────────────────────────────────────
+    #  Évaluation 
     eval_results = evaluate_scene(prob_scaled, ct_map, land_mask, nc_path, out_dir)
 
     return {"als_info": als_info, "eval": eval_results}

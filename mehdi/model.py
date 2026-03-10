@@ -27,7 +27,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-# ─── Blocs de base ────────────────────────────────────────────────────────────
+#  Blocs de base 
 
 class DoubleConv(nn.Module):
     """Conv3×3 → BN → ReLU → Conv3×3 → BN → ReLU (avec dropout optionnel)."""
@@ -64,7 +64,7 @@ class Down(nn.Module):
         return self.block(x)
 
 
-# ─── Attention Gate ────────────────────────────────────────────────────────────
+#  Attention Gate 
 
 class AttentionGate(nn.Module):
     """
@@ -111,7 +111,7 @@ class AttentionGate(nn.Module):
         return alpha * l                             # gate multiplicatif
 
 
-# ─── Bloc décodeur ─────────────────────────────────────────────────────────────
+#  Bloc décodeur 
 
 class Up(nn.Module):
     """Upsample → AttentionGate → concat(skip_filtré, upsampled) → DoubleConv."""
@@ -129,7 +129,7 @@ class Up(nn.Module):
         return self.conv(x)
 
 
-# ─── Attention U-Net ───────────────────────────────────────────────────────────
+#  Attention U-Net 
 
 class AttentionUNet(nn.Module):
     """
@@ -152,22 +152,22 @@ class AttentionUNet(nn.Module):
         f = base_features
         self.n_channels = n_channels
 
-        # ── Encodeur ──────────────────────────────────────────────────────────
+        #  Encodeur 
         self.enc1 = DoubleConv(n_channels, f, dropout)         # 256 → 256,  f
         self.enc2 = Down(f,     f * 2, dropout)                # 256 → 128,  2f
         self.enc3 = Down(f * 2, f * 4, dropout)                # 128 →  64,  4f
         self.enc4 = Down(f * 4, f * 8, dropout)                #  64 →  32,  8f
 
-        # ── Goulot ────────────────────────────────────────────────────────────
+        #  Goulot 
         self.bottleneck = Down(f * 8, f * 16, dropout=0.0)     #  32 →  16, 16f
 
-        # ── Décodeur ──────────────────────────────────────────────────────────
+        #  Décodeur 
         self.up4 = Up(f * 16, f * 8,  f * 8)                   #  16 →  32
         self.up3 = Up(f * 8,  f * 4,  f * 4)                   #  32 →  64
         self.up2 = Up(f * 4,  f * 2,  f * 2)                   #  64 → 128
         self.up1 = Up(f * 2,  f,      f)                       # 128 → 256
 
-        # ── Tête de sortie ────────────────────────────────────────────────────
+        #  Tête de sortie 
         self.out_conv = nn.Conv2d(f, 1, kernel_size=1)
 
         # Initialisation des poids (He pour Conv, 0/1 pour BN)
@@ -210,7 +210,7 @@ class AttentionUNet(nn.Module):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
 
-# ─── Sanity check ─────────────────────────────────────────────────────────────
+#  Sanity check 
 
 if __name__ == "__main__":
     model = AttentionUNet(n_channels=4, base_features=64, dropout=0.1)

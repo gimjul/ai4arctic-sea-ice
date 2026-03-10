@@ -1,6 +1,3 @@
-# Dépendances du projet Mehdi — AI4Arctic Sea Ice Segmentation
-# RTX 5070 Ti → installer PyTorch avec CUDA 12.x
-
 # Deep Learning
 torch>=2.2.0           # torch.compile + bfloat16 AMP
 torchvision>=0.17.0
@@ -26,4 +23,4 @@ tqdm>=4.65.0
 
 # Optionnel (monitoring)
 psutil>=5.9.0
-pandas>=2.0.0          # tableau récapitulatif dans run_pipeline.ipynb
+pandas>=2.0.0
