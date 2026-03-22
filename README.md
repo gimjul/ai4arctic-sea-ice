@@ -1,6 +1,6 @@
 # AI4Arctic Sea Ice
 
-Paper: https://arxiv.org/abs/2603.13573
+Our paper: https://arxiv.org/abs/2603.13573
 
 <p align="center">
   <img src="assets/ai4arctic-sea-ice.png" alt="AI4Arctic Sea Ice" width="500"/>
